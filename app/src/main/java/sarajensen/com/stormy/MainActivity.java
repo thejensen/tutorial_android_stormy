@@ -1,11 +1,13 @@
 package sarajensen.com.stormy;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -23,16 +25,17 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG = MainActivity.class.getSimpleName();
     private CurrentWeather currentWeather;
 
-    @BindView(R.id.temperatureLabel) TextView mTemperatureLabel;
-    @BindView(R.id.timeLabel) TextView mTimeLabel;
-    @BindView(R.id.humidityLabel) TextView mHumidityLabel;
-    @BindView(R.id.precipLabel) TextView mPrecipLabel;
+    @BindView(R.id.temperatureLabel) TextView mTemperatureValue;
+    @BindView(R.id.timeLabel) TextView mTimeValue;
+    @BindView(R.id.humidityValue) TextView mHumidityValue;
+    @BindView(R.id.precipValue) TextView mPrecipValue;
     @BindView(R.id.summaryLabel) TextView mSummaryLabel;
-    @BindView(R.id.iconImageView) ImageView mImageView;
+    @BindView(R.id.iconImageView) ImageView mIconImageView;
+    @BindView(R.id.refreshImageView) ImageView mRefreshImageView;
 
 
     @Override
@@ -40,10 +43,17 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+        final double latitude =  37.8267;
+        final double longitude = -122.4233;
+        getForecast(latitude, longitude);
 
+        Log.d(TAG, "Main UI code is running");
+
+        mRefreshImageView.setOnClickListener(this);
+    }
+
+    private void getForecast(double latitude, double longitude) {
         String apiKey = "4d38f8f90d3b20f33758559cc9d62631";
-        double latitude =  37.8267;
-        double longitude = -122.4233;
         String forecastUrl = "https://api.darksky.net/forecast/" + apiKey + "/" + latitude + "," + longitude;
 
         if (isNetworkAvailable()) {
@@ -87,14 +97,19 @@ public class MainActivity extends AppCompatActivity {
             });
         }
         else {
-            Toast.makeText(this, sarajensen.com.stormy.R.string.error_network_unavailable, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.error_network_unavailable, Toast.LENGTH_LONG).show();
         }
-
-        Log.d(TAG, "Main UI code is running");
     }
 
     private void updateDisplay() {
-        mTemperatureLabel.setText(currentWeather.getTemperature() + "");
+        mTemperatureValue.setText(currentWeather.getTemperature() + "");
+        mTimeValue.setText("At " + currentWeather.getFormattedTime() + " it will be");
+        mHumidityValue.setText(currentWeather.getHumidity() + "");
+        mPrecipValue.setText(currentWeather.getPrecipChance() + "");
+        mSummaryLabel.setText(currentWeather.getSummary());
+
+        Drawable drawable = getResources().getDrawable(currentWeather.getIconId());
+        mIconImageView.setImageDrawable(drawable);
     }
 
     private CurrentWeather getCurrentDetails(String jsonData) throws JSONException {
@@ -130,5 +145,15 @@ public class MainActivity extends AppCompatActivity {
     private void alertUserAboutError() {
         AlertDialogFragment dialog = new AlertDialogFragment();
         dialog.show(getFragmentManager(), "error_dialog");
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v == mRefreshImageView) {
+            final double latitude =  37.8267;
+            final double longitude = -122.4233;
+            getForecast(latitude, longitude);
+
+        }
     }
 }
